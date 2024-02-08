@@ -1,0 +1,283 @@
+openapi: 3.0.3
+info:
+  title: python-exercise
+  description: rest api project
+  version: 0.1.0
+  contact:
+    name: evertz.io
+    url: https://support.evertz.io
+    email: support@evertz.io
+servers:
+  - url: https://{region}.{environment}.evertz.io/{service}
+    variables:
+      region:
+        default: us-east-1
+        enum:
+          - us-east-1
+          - eu-west-1
+          - us-west-2
+          - ap-southeast-2
+        description: >-
+          The AWS region. See
+          https://aws.amazon.com/about-aws/global-infrastructure/regions_az/.
+          Data is persisted per-region, so data saved in one region will not be
+          available in the other regions.
+      environment:
+        default: dev.api
+        enum:
+          - api
+          - dev.api
+          - test.api
+        description: >-
+          The environment. Data is persisted per-environment, so data saved in
+          one environment will not be available in other environments.
+      service:
+        default: python-exercise
+        description: The service base path
+paths:
+  '/items/{item_id}':
+    get:
+      operationId: item_id
+      summary: Get Item
+      description: Get details for an Item
+      parameters:
+        - $ref: '#/components/parameters/item_id'
+      responses:
+        '200':
+          $ref: '#/components/responses/GetItemResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequestErrorResponse'
+        '404':
+          $ref: '#/components/responses/404NotFoundErrorResponse'
+      tags:
+        - python-exercise
+      security:
+        - BearerToken: []
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        httpMethod: POST
+        passthroughBehavior: when_no_match
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetItem.Arn}:live/invocations
+components:
+  parameters:
+    item_id:
+      name: item_id
+      in: path
+      description: ''
+      required: true
+      schema:
+        $ref: '#/components/schemas/ItemId'
+  schemas:
+    ItemId:
+      type: string
+      format: uuid
+  responses:
+    GetItemResponse:
+      description: Details of an Item
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: object
+              meta:
+                type: object
+    400BadRequestErrorResponse:
+      description: The format of the Request was incorrect
+      headers:
+        Access-Control-Allow-Origin:
+          $ref: '#/components/headers/Access-Control-Allow-Origin'
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+          example:
+            errors:
+              - id: 3b497b54-a071-11e8-b39c-35267da05e68
+                code: JSONDecodeError
+                title: Invalid JSON Error
+                detail: Unterminated string starting at
+                status: '400'
+    404NotFoundErrorResponse:
+      description: The requested resource was found
+      headers:
+        Access-Control-Allow-Origin:
+          $ref: '#/components/headers/Access-Control-Allow-Origin'
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+          example:
+            errors:
+              - id: 56fc7ff3-d33a-43db-909c-62aed8af0fd8
+                code: ResourceNotFound
+                title: Resource Not Found
+                detail: Resource [UNKNOWN] Not Found
+                status: '404'
+  securitySchemes:
+    BearerToken:
+      type: apiKey
+      description: |-
+        When you authenticate with evertz.io a set of JSON Web Tokens are
+        returned in the Response Body. When accessing HTTP Endpoints that
+        require this authentication schema, the `Authorization` Header of the
+        HTTP request must contain the `Id` Token that was issued.
+      name: Authorization
+      in: header
+      x-amazon-apigateway-authtype: oauth2
+      x-amazon-apigateway-authorizer:
+        type: token
+        authorizerUri:
+          Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/{{resolve:ssm:/authorization/authorizer/function:1}}/invocations'
+        authorizerCredentials: '{{resolve:ssm:/authorization/authorizer/role:1}}'
+        authorizerResultTtlInSeconds: 0
+  headers:
+    Access-Control-Allow-Origin:
+      description: CORS headers will be added when `Host` is a valid evertz.io domain
+      schema:
+        type: string
+        enum:
+          - evertz.io
+tags:
+  - name: python-exercise
+    description: Project based on cookiecutter for rest api
+externalDocs:
+  url: https://docs.evertz.tools/evertz-io/python-exercise/
+x-amazon-apigateway-api-key-source: AUTHORIZER
+x-amazon-apigateway-gateway-responses:
+  RESOURCE_NOT_FOUND:
+    statusCode: 404
+    responseTemplates:
+      application/vnd.api+json: |-
+        {
+          "errors": [
+            {
+              "id": "$context.requestId",
+              "code": "$context.error.responseType",
+              "detail": "$context.error.message",
+              "status": "404"
+            }
+          ]
+        }
+  MISSING_AUTHENTICATION_TOKEN:
+    statusCode: 401
+    responseTemplates:
+      application/vnd.api+json: |-
+        {
+          "errors": [
+            {
+              "id": "$context.requestId",
+              "code": "$context.error.responseType",
+              "detail": "$context.error.message",
+              "status": "401"
+            }
+          ]
+        }
+  ACCESS_DENIED:
+    statusCode: 403
+    responseTemplates:
+      application/vnd.api+json: |-
+        {
+          "errors": [
+            {
+              "id": "$context.requestId",
+              "code": "$context.error.responseType",
+              "detail": "$context.error.message",
+              "status": "403"
+            }
+          ]
+        }
+  UNAUTHORIZED:
+    statusCode: 401
+    responseTemplates:
+      application/vnd.api+json: |-
+        {
+          "errors": [
+            {
+              "id": "$context.requestId",
+              "code": "$context.error.responseType",
+              "detail": "$context.error.message",
+              "status": "401"
+            }
+          ]
+        }
+  EXPIRED_TOKEN:
+    statusCode: 401
+    responseTemplates:
+      application/vnd.api+json: |-
+        {
+          "errors": [
+            {
+              "id": "$context.requestId",
+              "code": "$context.error.responseType",
+              "detail": "$context.error.message",
+              "status": "401"
+            }
+          ]
+        }
+  QUOTA_EXCEEDED:
+    statusCode: 429
+    responseTemplates:
+      application/vnd.api+json: |-
+        {
+          "errors": [
+            {
+              "id": "$context.requestId",
+              "code": "$context.error.responseType",
+              "detail": "$context.error.message",
+              "status": "429"
+            }
+          ]
+        }
+  THROTTLED:
+    statusCode: 429
+    responseTemplates:
+      application/vnd.api+json: |-
+        {
+          "errors": [
+            {
+              "id": "$context.requestId",
+              "code": "$context.error.responseType",
+              "detail": "$context.error.message",
+              "status": "429"
+            }
+          ]
+        }
+  DEFAULT_4XX:
+    statusCode: 400
+    responseTemplates:
+      application/vnd.api+json: |-
+        {
+          "errors": [
+            {
+              "id": "$context.requestId",
+              "code": "$context.error.responseType",
+              "detail": "$context.error.message",
+              "status": "400"
+            }
+          ]
+        }
+  DEFAULT_5XX:
+    statusCode: 500
+    responseTemplates:
+      application/vnd.api+json: |-
+        {
+          "errors": [
+            {
+              "id": "$context.requestId",
+              "code": "$context.error.responseType",
+              "detail": "$context.error.message",
+              "status": "500"
+            }
+          ]
+        }
+x-amazon-apigateway-request-validator: all
+x-amazon-apigateway-request-validators:
+  all:
+    validateRequestBody: true
+    validateRequestParameters: true

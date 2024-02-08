@@ -1,0 +1,10 @@
+build/,.venv/,.git/,build_scripts/local/output_dir,.aws-sam/
+
+build/
+.venv/
+.git/
+build_scripts/local/output_dir/
+.aws-sam/
+.vscode/
+.pytest_cache/
+Pipfile.lock

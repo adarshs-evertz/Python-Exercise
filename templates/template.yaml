@@ -1,0 +1,321 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: |-
+  rest api project
+
+Parameters:
+  Name:
+    Type: String
+    Description: >-
+      A String that can be used to Identify Resources created by this Template.
+      Resources may use this Parameter when creating the Name Tag. The Name Tag
+      is commonly used by the AWS Console to provide a friendlier name to
+      Resources. This may be used to form part of a Name Tag.
+
+  Owner:
+    Type: String
+    Description: >-
+      The email address for the Team that owns the Resources created by this
+      Template.
+    AllowedPattern: ^(.*@evertz\.(io|com|tv),?)+$
+    ConstraintDescription: Must be an evertz.com,.io or .tv email address
+    Default: adarshs@evertz.com
+
+  Project:
+    Type: String
+    Description: >-
+      The name of the Project that the Resources created by this Template
+      belong to. A Team may own many Projects.
+    Default: python-exercise
+
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+      - INFO
+      - WARNING
+      - ERROR
+      - CRITICAL
+      - DEBUG
+
+  BasePath:
+    Type: String
+    Default: python-exercise
+
+  Env:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /account/environment
+
+Globals:
+  Function:
+    Runtime: python3.9
+    MemorySize: 384
+    Layers:
+      - '{{resolve:ssm:/layer/evertz-io-honeycomb-config:3}}'
+      - '{{resolve:ssm:/layer/otel-collector-ver-0-2-0/arm64:1}}'
+    Architectures:
+      - arm64
+    Timeout: 15
+    AutoPublishAlias: live
+    Environment:
+      Variables:
+        DYNAMODB_TABLE: !Ref Database
+        LOG_LEVEL: !Ref LogLevel
+        EVENTS_TOPIC: '{{resolve:ssm:/infrastructure/event-driven-architecture/topic/arn:1}}'
+        OPENTELEMETRY_COLLECTOR_CONFIG_FILE: '{{resolve:ssm:/honeycomb/config/path:1}}'
+        OTEL_SERVICE_NAME: !Ref 'Project'
+        OTEL_PROPAGATORS: tracecontext
+        RESTRICTED_ROLE: []
+    Tags:
+      Name: !Ref Name
+      Owner: !Ref Owner
+      Project: !Ref Project
+      Group: evertz.io
+
+Conditions:
+  isNotProd: !Not
+    - !Equals
+      - !Ref Env
+      - prod
+
+Resources:
+  DatabaseRead:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Ready Only Access to a DynamoDB Table
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:DescribeTable
+              - dynamodb:BatchGetItem
+              - dynamodb:GetItem
+              - dynamodb:Query
+              - dynamodb:Scan
+            Resource:
+              - !GetAtt Database.Arn
+              - !Sub ${Database.Arn}/index/*
+
+  DatabaseWrite:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Write Access to a DynamoDB Table
+      Path: /
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:DescribeTable
+              - dynamodb:BatchWriteItem
+              - dynamodb:DeleteItem
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+            Resource:
+              - !GetAtt Database.Arn
+
+  DeploymentHooksPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Allow CodeDeployHooks to run Functions and update HookStatus
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - codedeploy:PutLifecycleEventHookExecutionStatus
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:codedeploy:${AWS::Region}:${AWS::AccountId}:deploymentgroup:${ServerlessDeploymentApplication}/*'
+          - Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+            Resource:
+              - arn:aws:lambda:*:*:function:*
+
+  PublishToEventsTopic:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Allows events to be published to the SNS Topic
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sns:Publish
+            Resource:
+              - '{{resolve:ssm:/infrastructure/event-driven-architecture/topic/arn:1}}'
+
+  DeploymentHooksRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !Ref DeploymentHooksPolicy
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowLambdaToAssumeRole
+            Principal:
+              Service:
+                - !Sub lambda.${AWS::URLSuffix}
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+
+  ReadOnlyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !Ref DatabaseRead
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Sid: AllowLambdaServiceToAssumeRole
+            Principal:
+              Service:
+                - !Sub 'lambda.${AWS::URLSuffix}'
+            Action:
+              - sts:AssumeRole
+
+  ReadOnlyRoleAssume:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !Ref DatabaseRead
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowRoleToAssumeRole
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt 'ReadOnlyRole.Arn'
+            Action: sts:AssumeRole
+
+  GetItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.get_item
+      Role: !GetAtt 'ReadOnlyRole.Arn'
+      Environment:
+        Variables:
+          RESTRICTED_ROLE: !GetAtt 'ReadOnlyRoleAssume.Arn'
+      CodeUri: ../python_exercise
+      DeploymentPreference:
+        Type: AllAtOnce
+        Role: !ImportValue CODEDEPLOY-ROLE-ARN
+        Hooks:
+          PreTraffic: !If
+            - isNotProd
+            - !Ref GetItemPreTrafficHook
+            - !Ref AWS::NoValue
+          PostTraffic: !If
+            - isNotProd
+            - !Ref GetItemPostTrafficHook
+            - !Ref AWS::NoValue
+      Events:
+        GetItem:
+          Type: Api
+          Properties:
+            Method: get
+            Path: /items/{item_id}
+            RestApiId: !Ref API
+
+  GetItemPreTrafficHook:
+    Condition: isNotProd
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../python_exercise
+      Handler: deployment_hooks.get_item_pre_traffic_hook
+      Timeout: 600
+      Role: !GetAtt DeploymentHooksRole.Arn
+      Environment:
+        Variables:
+          LAMBDA_DEPLOYMENT_VERSION: !Ref GetItem.Version
+          API_HTTP_METHOD: get
+          API_HTTP_EVENT_PATH: /python-exercise/items/{item_id}
+          API_HTTP_BASE_PATH: !Sub '${AWS::Region}.{{resolve:ssm:/account/domain:2}}/${BasePath}'
+          RESTRICTED_ROLE: !GetAtt 'DeploymentHooksRole.Arn'
+      DeploymentPreference:
+        Enabled: false
+
+  GetItemPostTrafficHook:
+    Condition: isNotProd
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../python_exercise
+      Handler: deployment_hooks.get_item_post_traffic_hook
+      Timeout: 600
+      Role: !GetAtt DeploymentHooksRole.Arn
+      Environment:
+        Variables:
+          LAMBDA_DEPLOYMENT_VERSION: !Ref GetItem.Version
+          API_HTTP_METHOD: get
+          API_HTTP_EVENT_PATH: /python-exercise/items/{item_id}
+          API_HTTP_BASE_PATH: !Sub '${AWS::Region}.{{resolve:ssm:/account/domain:2}}/${BasePath}'
+          RESTRICTED_ROLE: !GetAtt 'DeploymentHooksRole.Arn'
+      DeploymentPreference:
+        Enabled: false
+
+  Database:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: True
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: True
+      Tags:
+        - Key: Name
+          Value: !Sub ${Name}
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+        - Key: Group
+          Value: evertz.io
+
+  API:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub ${Name}
+      EndpointConfiguration: REGIONAL
+      StageName: v1
+      TracingEnabled: False
+      Cors:
+        AllowOrigin: "'*'"
+        AllowHeaders: "'Authorization,Content-Type,X-Correlation-ID,traceparent'"
+        MaxAge: 600
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ../openapi.yaml
+      MethodSettings:
+        - LoggingLevel: !Ref LogLevel
+          MetricsEnabled: True
+          DataTraceEnabled: False
+          ResourcePath: '/*'
+          HttpMethod: '*'
+
+  RegionalBasePathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Properties:
+      BasePath: !Ref BasePath
+      DomainName: !ImportValue APIGATEWAY-DOMAIN-NAME
+      RestApiId: !Ref API
+      Stage: !Sub ${API.Stage}

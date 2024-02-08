@@ -1,0 +1,27 @@
+version: 2
+registries:
+  python-codeartifact:
+    type: python-index
+    url: https://evertz-io-737710810646.d.codeartifact.us-east-1.amazonaws.com/pypi/evertz-io-repo/simple/
+    username: aws
+    password: ${{secrets.CODE_ARTIFACT_TOKEN_EVERTZ_IO}}
+    replaces-base: true
+updates:
+  - package-ecosystem: 'pip'
+    directory: '/'
+    insecure-external-code-execution: allow
+    open-pull-requests-limit: 0
+    schedule:
+      interval: 'weekly'
+    registries:
+      - python-codeartifact
+    reviewers:
+      - evertz-fbrnd/security-team
+      - adarshs-evertz
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    reviewers:
+      - adarshs-evertz
+      - evertz-fbrnd/security-team

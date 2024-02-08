@@ -1,0 +1,36 @@
+name: run-linters
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+jobs:
+  run-linter:
+    runs-on: ubuntu-latest
+    container: ghcr.io/evertz-fbrnd/eiosam:latest
+    steps:
+      - name: pip version
+        run: pip --version
+      - name: pip freeze
+        run: pip freeze
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: run linters
+        env:
+          CODEARTIFACT_AUTH_TOKEN: ${{secrets.CODE_ARTIFACT_TOKEN_EVERTZ_IO}}
+        run: |
+          export NODE_VERSION=16.13.0
+          export PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
+          export JUNIT_XML_RESULT=$PWD/junit.xml
+          if [ -f $JUNIT_XML_RESULT ]; then
+              \rm $JUNIT_XML_RESULT;
+          fi
+          export PACKAGE_DIR=python_exercise
+          export SOURCE_TEMPLATE="template.yaml"
+          export TEMPLATE_FOLDER="templates"
+          export UNIT_TEST_RESULTS="--junitxml=$JUNIT_XML_RESULT"
+
+          ./build_scripts/run_linters.sh
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: ${{ github.actor != 'dependabot[bot]' }}
+        with:
+          junit_files: 'junit.xml'
