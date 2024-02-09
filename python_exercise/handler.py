@@ -12,6 +12,7 @@ from botocore.exceptions import ClientError
 from evertz_io_identity_lib.event import get_identity_from_event
 from evertz_io_observability.decorators import join_trace
 from evertz_io_observability.otel_collector import export_trace
+from evertz_io_observability.target_services import ExportService
 from lambda_event_sources.event_sources import EventSource
 
 from context import logger
@@ -22,7 +23,7 @@ from service import Service
 
 
 # pylint: disable=no-value-for-parameter
-@export_trace
+@export_trace(export_service=ExportService.OTEL_COLLECTOR_LAYER)
 @join_trace(event_source=EventSource.API_GATEWAY_REQUEST)
 @event_parser(model=ItemModel)
 def create_item(event: ItemModel, context: LambdaContext) -> dict:
@@ -52,7 +53,7 @@ def create_item(event: ItemModel, context: LambdaContext) -> dict:
 
 
 # pylint: disable=no-value-for-parameter
-@export_trace
+@export_trace(export_service=ExportService.OTEL_COLLECTOR_LAYER)
 @join_trace(event_source=EventSource.API_GATEWAY_REQUEST)
 @event_parser(model=ItemModel)
 def get_item(event: ItemModel, context: LambdaContext) -> dict:
