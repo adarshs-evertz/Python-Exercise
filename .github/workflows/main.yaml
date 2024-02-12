@@ -12,7 +12,7 @@ jobs:
       - name: pip freeze
         run: pip freeze
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: run linters
         env:
           CODEARTIFACT_AUTH_TOKEN: ${{secrets.CODE_ARTIFACT_TOKEN_EVERTZ_IO}}
