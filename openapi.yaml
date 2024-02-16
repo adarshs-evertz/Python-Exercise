@@ -35,6 +35,24 @@ servers:
         default: python-exercise
         description: The service base path
 paths:
+  '/items':
+    post:
+      operationId: createItem
+      summary: Create Item
+      description: Creating an Item
+      responses:
+        '200':
+          $ref: '#/components/responses/GetItemResponse'
+      tags:
+        - python-exercise
+      security:
+        - BearerToken: []
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        httpMethod: POST
+        passthroughBehavior: when_no_match
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateItem.Arn}:live/invocations
   '/items/{item_id}':
     get:
       operationId: item_id
@@ -72,6 +90,15 @@ components:
     ItemId:
       type: string
       format: uuid
+  requestBodies:
+    CreateItemRequest:
+      description: Creating an item
+      required: True
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            description: Item data
   responses:
     GetItemResponse:
       description: Details of an Item

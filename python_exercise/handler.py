@@ -18,7 +18,7 @@ from lambda_event_sources.event_sources import EventSource
 from context import logger
 from db import Db
 from errors import ItemNotFound
-from models import ErrorsBody, Headers, Item, ItemModel
+from models import ErrorsBody, Headers, Item, ItemModel, ItemWithPathParametersModel
 from service import Service
 
 
@@ -39,6 +39,8 @@ def create_item(event: ItemModel, context: LambdaContext) -> dict:
     identity = get_identity_from_event(event=event.dict(), verify=False)
     tenant_id = identity.tenant
     item_data = event.body
+    item_data = event.body.dict()
+    request_id = event.requestContext.requestId
 
     # Database served as dependency injection here, so it will be easier to test this or mock it base on level 0
     service = Service(Db(), tenant_id, identity.sub)
@@ -55,8 +57,8 @@ def create_item(event: ItemModel, context: LambdaContext) -> dict:
 # pylint: disable=no-value-for-parameter
 @export_trace(export_service=ExportService.OTEL_COLLECTOR_LAYER)
 @join_trace(event_source=EventSource.API_GATEWAY_REQUEST)
-@event_parser(model=ItemModel)
-def get_item(event: ItemModel, context: LambdaContext) -> dict:
+@event_parser(model=ItemWithPathParametersModel)
+def get_item(event: ItemWithPathParametersModel, context: LambdaContext) -> dict:
     """
     Retrieve an item
 

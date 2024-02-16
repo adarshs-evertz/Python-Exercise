@@ -31,8 +31,13 @@ class ItemModel(APIGatewayProxyEventModel):
 
     # pylint: disable=unsubscriptable-object
     body: Optional[Json[Item]]  # type: ignore[assignment]
-    path_parameters: PathParameters = Field(alias="pathParameters")
     request_context: RequestContext = Field(alias="requestContext")
+
+
+class ItemWithPathParametersModel(ItemModel):
+    """Model to allow for Path Parameters"""
+
+    path_parameters: PathParameters = Field(alias="pathParameters")
 
 
 class Headers(BaseModel):
