@@ -2,6 +2,7 @@
 Manage items.
 """
 import datetime
+import uuid
 
 from evertz_io_observability.decorators import start_span
 
@@ -45,6 +46,8 @@ class Service:
             "last_modified_at": now,
             "last_modified_by": self.user_id,
         }
+
+        item["id"] = str(uuid.uuid4())
         try:
             self.database.put_item(
                 item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item["id"], item_data=item

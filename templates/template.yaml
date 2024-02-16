@@ -196,6 +196,38 @@ Resources:
               AWS: !GetAtt 'ReadOnlyRole.Arn'
             Action: sts:AssumeRole
 
+  CreateOnlyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !Ref DatabaseWrite
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Sid: AllowLambdaServiceToAssumeRole
+            Principal:
+              Service:
+                - !Sub 'lambda.${AWS::URLSuffix}'
+            Action:
+              - sts:AssumeRole
+
+  CreateOnlyRoleAssume:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !Ref DatabaseWrite
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowRoleToAssumeRole
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt 'CreateOnlyRole.Arn'
+            Action: sts:AssumeRole
+
   GetItem:
     Type: AWS::Serverless::Function
     Properties:
@@ -223,6 +255,34 @@ Resources:
           Properties:
             Method: get
             Path: /items/{item_id}
+            RestApiId: !Ref API
+  CreateItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.create_item
+      Role: !GetAtt 'CreateOnlyRole.Arn'
+      Environment:
+        Variables:
+          RESTRICTED_ROLE: !GetAtt 'CreateOnlyRoleAssume.Arn'
+      CodeUri: ../python_exercise
+      DeploymentPreference:
+        Type: AllAtOnce
+        Role: !ImportValue CODEDEPLOY-ROLE-ARN
+        Hooks:
+          PreTraffic: !If
+            - isNotProd
+            - !Ref GetItemPreTrafficHook
+            - !Ref AWS::NoValue
+          PostTraffic: !If
+            - isNotProd
+            - !Ref GetItemPostTrafficHook
+            - !Ref AWS::NoValue
+      Events:
+        CreateItem:
+          Type: Api
+          Properties:
+            Method: post
+            Path: /items
             RestApiId: !Ref API
 
   GetItemPreTrafficHook:
