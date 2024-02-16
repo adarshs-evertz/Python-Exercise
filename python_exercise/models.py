@@ -38,7 +38,7 @@ class ItemWithPathParametersModel(ItemModel):
     """Model to allow for Path Parameters"""
 
     path_parameters: PathParameters = Field(alias="pathParameters")
-    
+
 
 class Headers(BaseModel):
     """Response headers"""

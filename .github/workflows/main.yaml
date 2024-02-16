@@ -5,7 +5,7 @@ on:
 jobs:
   run-linter:
     runs-on: ubuntu-latest
-    container: ghcr.io/evertz-fbrnd/eiosam:latest
+    container: python:3.9.18-slim
     steps:
       - name: pip version
         run: pip --version
