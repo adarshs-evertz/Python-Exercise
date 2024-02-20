@@ -57,3 +57,30 @@ class Service:
             # tests errors here
             raise error
         return item
+
+    @start_span("service_create_item")
+    def update_item(self, item: dict, item_id: str) -> dict:
+        """
+        Updating item
+
+        :param item: the item data to be saved
+
+        :return: Dict
+        """
+        logger.info(f"Updating Item: {item}")
+        now = datetime.datetime.utcnow().isoformat()
+        item["modification_info"] = {
+            "created_at": now,
+            "created_by": self.user_id,
+            "last_modified_at": now,
+            "last_modified_by": self.user_id,
+        }
+        try:
+            self.database.update_item(
+                item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id, item_data=item
+            )
+        except Exception as error:
+            print(error)
+            # tests errors here
+            raise error
+        return item
