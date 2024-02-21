@@ -143,7 +143,7 @@ class Db:
         item = {PK_KEY: keys.primary, ITEM_ID_ATTRIBUTE: item_id}
         if item_data:
             item[DATA_ATTRIBUTE] = item_data
-        kwargs = {"Item": item, "ConditionExpression": Attr(PK_KEY).exists()}
+        kwargs = {"ConditionExpression": Attr(PK_KEY).exists(), "Key": {PK_KEY: keys.primary}}
         try:
             restricted_table(TABLE_NAME, tenant_id).update_item(**kwargs)
         except ClientError as client_error:

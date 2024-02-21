@@ -130,6 +130,8 @@ def update_item(event: ItemWithPathParametersModel, context: LambdaContext) -> d
     item_id = path_parameters.item_id
     tenant_id = identity.tenant
     request_id = event.requestContext.requestId
+    item_data = event.body
+    item_data = event.body.dict()
 
     logger.info(f"Getting Item: [{item_id}]")
     logger.info(f"With Tenant Context: [{tenant_id}]")

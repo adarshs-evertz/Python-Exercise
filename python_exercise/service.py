@@ -58,7 +58,7 @@ class Service:
             raise error
         return item
 
-    @start_span("service_create_item")
+    @start_span("service_update_item")
     def update_item(self, item: dict, item_id: str) -> dict:
         """
         Updating item
