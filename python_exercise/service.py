@@ -59,7 +59,7 @@ class Service:
         return item
 
     @start_span("service_update_item")
-    def update_item(self, item: dict, item_id: str) -> dict:
+    def update_item(self, item: dict, item_id: str, ) -> dict:
         """
         Updating item
 
@@ -70,8 +70,6 @@ class Service:
         logger.info(f"Updating Item: {item}")
         now = datetime.datetime.utcnow().isoformat()
         item["modification_info"] = {
-            "created_at": now,
-            "created_by": self.user_id,
             "last_modified_at": now,
             "last_modified_by": self.user_id,
         }

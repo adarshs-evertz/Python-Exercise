@@ -59,14 +59,14 @@ class TestHandler:
         assert body["errors"][0]["code"] == "ItemNotFound"
 
     @mock.patch("handler.Db")
-    def test_update_item_success(self, mock_db, get_correct_item_event):
-        event, context = get_correct_item_event
+    def test_update_item_success(self, mock_db, update_correct_item_event):
+        event, context = update_correct_item_event
 
         mock_db.return_value = MockDb()
         response = handler.update_item(event, context)
         assert response["statusCode"] == HTTPStatus.OK
         body = json.loads(response["body"])
-        assert body == {"success": True, "text": "some test text"}
+        assert body == {"success": True, "text": "test"}
         headers = response["headers"]
         assert headers["Content-Type"] == "application/vnd.api+json"
 

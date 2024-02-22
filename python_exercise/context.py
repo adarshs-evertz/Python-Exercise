@@ -1,5 +1,5 @@
-"""Variables in use during the lifecycle of an invocation request"""
-import logging
+"""Variables in use during the liflecycle of an invocation request"""
+from aws_lambda_powertools import Logger
 
 # default this to the root logger
-logger = logging.getLogger()
+logger = Logger()

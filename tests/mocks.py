@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Mapping
 
 from db import Db, ItemType
 from errors import ItemNotFound

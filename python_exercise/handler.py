@@ -40,7 +40,6 @@ def create_item(event: ItemModel, context: LambdaContext) -> dict:
     tenant_id = identity.tenant
     item_data = event.body
     item_data = event.body.dict()
-    request_id = event.requestContext.requestId
 
     # Database served as dependency injection here, so it will be easier to test this or mock it base on level 0
     service = Service(Db(), tenant_id, identity.sub)
@@ -130,7 +129,6 @@ def update_item(event: ItemWithPathParametersModel, context: LambdaContext) -> d
     item_id = path_parameters.item_id
     tenant_id = identity.tenant
     request_id = event.requestContext.requestId
-    item_data = event.body
     item_data = event.body.dict()
 
     logger.info(f"Getting Item: [{item_id}]")
@@ -172,4 +170,3 @@ def update_item(event: ItemWithPathParametersModel, context: LambdaContext) -> d
             "body": ErrorsBody(errors=[error_context]).json(),
         }
     return response
-
