@@ -69,7 +69,10 @@ class Service:
         """
         logger.info(f"Updating Item: {item}")
         now = datetime.datetime.utcnow().isoformat()
+        existing_item= self.database.get_item(item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id)
         item["modification_info"] = {
+            "created_at": existing_item['modification_info']['created_at'],
+            "created_by": existing_item['modification_info']['created_by'],
             "last_modified_at": now,
             "last_modified_by": self.user_id,
         }
