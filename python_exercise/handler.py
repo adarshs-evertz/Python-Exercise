@@ -137,11 +137,11 @@ def update_item(event: ItemWithPathParametersModel, context: LambdaContext) -> d
     # Database served as dependency injection here, so it will be easier to test this or mock it base on level 0
     service = Service(Db(), tenant_id, identity.sub)
     try:
-        existing_item = service.update_item(item_id=item_id, item=item_data)
+        updated_item = service.update_item(item_id=item_id, item=item_data)
         response = {
             "statusCode": HTTPStatus.OK,
             "headers": Headers(content_type="application/vnd.api+json").dict(by_alias=True),
-            "body": Item(**existing_item).json(),
+            "body": Item(**updated_item).json(),
         }
     except ItemNotFound as error:
         error_context = {

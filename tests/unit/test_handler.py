@@ -66,7 +66,7 @@ class TestHandler:
         response = handler.update_item(event, context)
         assert response["statusCode"] == HTTPStatus.OK
         body = json.loads(response["body"])
-        assert body == {"success": True, "text": "test"}
+        assert body == {"text":"test", "success":True}
         headers = response["headers"]
         assert headers["Content-Type"] == "application/vnd.api+json"
 
