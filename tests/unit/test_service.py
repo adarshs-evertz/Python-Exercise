@@ -6,6 +6,7 @@ from unittest.mock import patch
 import evertz_io_identity_lib
 import mock
 import pytest
+import uuid
 
 from tests.mocks import MockDb
 
@@ -28,20 +29,22 @@ from service import Service
 
 class TestService:
     @mock.patch("service.Db")
-    def test_update_item(self, mock_db,):
-        
-        item = {"success": True, "text":"some text"}
+    def test_update_item_keys(self, mock_db):
+        payload = {"success": True, "text":"some text"}
         tenant_id = 'test_tenant'
         user_id = 'test_user'
-        new_service = Service(mock_db.return_value, tenant_id, user_id)
-        item_id = new_service.create_item(item)
-        new_item = {"success": False, "text":"some text"}
-        response = new_service.update_item(item, item_id)
+        mock_db.return_value = MockDb()
+        new_service = Service(mock_db, tenant_id, user_id)
+        item = new_service.create_item(payload)
+        item["success"]=False
+        updated_item = new_service.update_item(item, item["id"])
         expected_dict={"id", "modification_info", "success","text"}
-        assert all(key in response for key in expected_dict), "Key not found"
-        assert response["id"] == item["id"]
+        assert all(key in updated_item for key in expected_dict), "Key not found"
+        assert updated_item["id"] == item["id"]
         modification = item["modification_info"]
-        assert response["modification_info"]["created_at"] == modification["created_at"]
-        assert response["modification_info"]["created_by"] == modification["created_by"]
-        
+        assert updated_item["modification_info"]["created_at"] == modification["created_at"]
+        assert updated_item["modification_info"]["created_by"] == modification["created_by"]
+        assert updated_item["success"] == False
+
+
 
