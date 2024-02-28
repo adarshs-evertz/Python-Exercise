@@ -227,41 +227,7 @@ Resources:
             Principal:
               AWS: !GetAtt 'CreateOnlyRole.Arn'
             Action: sts:AssumeRole
-
-  UpdateRole:
-    Type: AWS::IAM::Role
-    Properties:
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        - !Ref DatabaseWrite
-        - !Ref DatabaseRead
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Sid: AllowLambdaServiceToAssumeRole
-            Principal:
-              Service:
-                - !Sub 'lambda.${AWS::URLSuffix}'
-            Action:
-              - sts:AssumeRole
-
-  UpdateRoleAssume:
-    Type: AWS::IAM::Role
-    Properties:
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        - !Ref DatabaseWrite
-        - !Ref DatabaseRead
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: AllowRoleToAssumeRole
-            Effect: Allow
-            Principal:
-              AWS: !GetAtt 'UpdateRole.Arn'
-            Action: sts:AssumeRole
-
+            
   GetItem:
     Type: AWS::Serverless::Function
     Properties:
@@ -322,10 +288,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handler.update_item
-      Role: !GetAtt 'UpdateRole.Arn'
+      Role: !GetAtt 'CreateOnlyRole.Arn'
       Environment:
         Variables:
-          RESTRICTED_ROLE: !GetAtt 'UpdateRoleAssume.Arn'
+          RESTRICTED_ROLE: !GetAtt 'CreateOnlyRoleAssume.Arn'
       CodeUri: ../python_exercise
       DeploymentPreference:
         Type: AllAtOnce

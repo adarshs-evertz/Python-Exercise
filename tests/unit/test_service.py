@@ -43,7 +43,4 @@ class TestService:
         expected_keys = {"id", "modification_info", "success", "text"}
         assert all(key in updated_item for key in expected_keys), "Key not found"
         assert updated_item["id"] == item["id"]
-        modification = item["modification_info"]
-        assert updated_item["modification_info"]["created_at"] == modification["created_at"]
-        assert updated_item["modification_info"]["created_by"] == modification["created_by"]
         assert updated_item["success"] == False

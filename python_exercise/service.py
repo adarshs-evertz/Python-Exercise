@@ -74,12 +74,7 @@ class Service:
         """
         logger.info(f"Updating Item: {item}")
         now = datetime.datetime.utcnow().isoformat()
-        existing_item = self.database.get_item(item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id)
-        modification_info = existing_item.get("modification_info", {})
-        logger.info(f"Existing Item: {existing_item}")
         item["modification_info"] = {
-            "created_at": modification_info.get("created_at"),
-            "created_by": modification_info.get("created_by"),
             "last_modified_at": now,
             "last_modified_by": self.user_id,
         }
@@ -87,7 +82,7 @@ class Service:
             self.database.update_item(
                 item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id, item_data=item
             )
-        except Exception as error:
+        except Exception :
             logger.exception("exception occured")
             raise
         return item

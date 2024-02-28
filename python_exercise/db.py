@@ -143,7 +143,7 @@ class Db:
         item = {DATA_ATTRIBUTE: item_data}
         logger.info(f"Value of {item_data=}")
         logger.info(f"Value of {item[DATA_ATTRIBUTE]=}")
-        updates = update_expression(update=item)
+        updates = update_expression(update=item, partial_update=True)
         kwargs = {
             "ConditionExpression": Attr(PK_KEY).exists(),
             "Key": {PK_KEY: keys.primary},
