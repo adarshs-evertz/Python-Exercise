@@ -59,17 +59,28 @@ class TestHandler:
         assert body["errors"][0]["code"] == "ItemNotFound"
 
     @mock.patch("service.Service.update_item")
-    def test_update_item_success(self, mock_service_update_item,  update_correct_item_event):
+    @mock.patch("handler.Db")
+    def test_update_item_success(self, mock_db, mock_service_update_item, update_correct_item_event):
         event, context = update_correct_item_event
 
-        mock_service_update_item.return_value = {"id": "some_id", "modification_info": {"created_at": "2024-02-22T14:42:05.131396", "created_by": "4730f174-c00c-4920-982e-e5a4984d9ca4", "last_modified_at": "2024-02-22T14:42:05.131396", "last_modified_by": "4730f174-c00c-4920-982e-e5a4984d9ca4"}, "text": "test", "success": True}
+        mock_service_update_item.return_value = {
+            "id": "some_id",
+            "modification_info": {
+                "created_at": "2024-02-22T14:42:05.131396",
+                "created_by": "4730f174-c00c-4920-982e-e5a4984d9ca4",
+                "last_modified_at": "2024-02-22T14:42:05.131396",
+                "last_modified_by": "4730f174-c00c-4920-982e-e5a4984d9ca4",
+            },
+            "text": "test",
+            "success": True,
+        }
+        mock_db.return_value = MockDb()
         response = handler.update_item(event, context)
         assert response["statusCode"] == HTTPStatus.OK
         body = json.loads(response["body"])
-        assert body == {"text":"test", "success":True}
+        assert body == {"text": "test", "success": True}
         headers = response["headers"]
         assert headers["Content-Type"] == "application/vnd.api+json"
-
 
     def test_try_update_item_without_jwt(self, update_item_without_jwt_event):
         event, context = update_item_without_jwt_event

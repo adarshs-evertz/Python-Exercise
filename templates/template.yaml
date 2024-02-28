@@ -340,7 +340,7 @@ Resources:
             - !Ref GetItemPostTrafficHook
             - !Ref AWS::NoValue
       Events:
-        CreateItem:
+        UpdateItem:
           Type: Api
           Properties:
             Method: patch

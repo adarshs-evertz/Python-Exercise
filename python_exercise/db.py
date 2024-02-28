@@ -7,15 +7,13 @@ from typing import Any, Mapping, Optional
 
 from boto3.dynamodb.conditions import Attr
 from botocore.exceptions import ClientError
-from evertz_io_dynamo_utils.expressions import projection_expression
+from evertz_io_dynamo_utils.expressions import projection_expression, update_expression
 from evertz_io_identity_lib.iam import restricted_table
 from evertz_io_observability.decorators import start_span
 
 from config import TABLE_NAME
 from context import logger
 from errors import ItemConflict, ItemNotFound
-
-from evertz_io_dynamo_utils.expressions import update_expression
 
 # String used as the delimiter for separating information in the overloaded keys
 KEY_DELIMITER = "#"
@@ -140,13 +138,12 @@ class Db:
         :param item_id: item id
         :param item_data: data to store with item
         """
-        logger.info(f"Updating item from DB for item [{item_id}] for tenant [{tenant_id}]")
+        logger.info(f"Updating item [{item_id}] for tenant [{tenant_id}]")
         keys: ItemKeys = ItemKeys.get_keys(item_type, tenant_id, item_id)
-        # item = {PK_KEY: keys.primary, ITEM_ID_ATTRIBUTE: item_id}
-        item = {DATA_ATTRIBUTE:item_data}
+        item = {DATA_ATTRIBUTE: item_data}
         logger.info(f"Value of {item_data=}")
         logger.info(f"Value of {item[DATA_ATTRIBUTE]=}")
-        updates=update_expression(update= item)
+        updates = update_expression(update=item)
         kwargs = {
             "ConditionExpression": Attr(PK_KEY).exists(),
             "Key": {PK_KEY: keys.primary},

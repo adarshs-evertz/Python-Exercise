@@ -131,6 +131,7 @@ def get_not_existing_item_event(jwts, api_gateway_event):
     event["headers"]["Authorization"] = jwts["IdToken"]
     yield event, context
 
+
 @pytest.fixture()
 def update_correct_item_event(jwts, api_gateway_event):
     event, context = api_gateway_event("1", "/update_item/1", "PATCH", Item(text="test", success=True))

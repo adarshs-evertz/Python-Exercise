@@ -111,6 +111,8 @@ def get_item(event: ItemWithPathParametersModel, context: LambdaContext) -> dict
             "body": ErrorsBody(errors=[error_context]).json(),
         }
     return response
+
+
 # pylint: disable=no-value-for-parameter
 @export_trace(export_service=ExportService.OTEL_COLLECTOR_LAYER)
 @join_trace(event_source=EventSource.API_GATEWAY_REQUEST)

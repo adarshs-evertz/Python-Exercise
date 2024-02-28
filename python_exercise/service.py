@@ -59,22 +59,27 @@ class Service:
         return item
 
     @start_span("service_update_item")
-    def update_item(self, item: dict, item_id: str, ) -> dict:
+    def update_item(
+        self,
+        item: dict,
+        item_id: str,
+    ) -> dict:
         """
         Updating item
 
         :param item: the item data to be saved
+        :param item_id: The id of the user to fetch
 
         :return: Dict
         """
         logger.info(f"Updating Item: {item}")
         now = datetime.datetime.utcnow().isoformat()
-        existing_item= self.database.get_item(item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id)
-        modification_info = existing_item.get('modification_info', {})
+        existing_item = self.database.get_item(item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id)
+        modification_info = existing_item.get("modification_info", {})
         logger.info(f"Existing Item: {existing_item}")
         item["modification_info"] = {
-            "created_at": modification_info.get('created_at'),
-            "created_by": modification_info.get('created_by'),
+            "created_at": modification_info.get("created_at"),
+            "created_by": modification_info.get("created_by"),
             "last_modified_at": now,
             "last_modified_by": self.user_id,
         }
@@ -83,7 +88,6 @@ class Service:
                 item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id, item_data=item
             )
         except Exception as error:
-            print(error)
-            # tests errors here
+            logger.exception(error)
             raise error
         return item
