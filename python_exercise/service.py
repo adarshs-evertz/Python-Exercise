@@ -88,6 +88,6 @@ class Service:
                 item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id, item_data=item
             )
         except Exception as error:
-            logger.exception(error)
-            raise error
+            logger.exception("exception occured")
+            raise
         return item
