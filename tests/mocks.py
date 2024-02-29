@@ -21,3 +21,7 @@ class MockDb(Db):
             return item_data
         else:
             raise ItemNotFound(item_type.value, tenant_id, item_id)
+
+    def delete_item(item_type: ItemType, tenant_id: str, item_id: str, fields=None) -> dict[str, Any]:
+        if item_id == "1":
+            raise ItemNotFound(item_type.value, tenant_id, item_id)

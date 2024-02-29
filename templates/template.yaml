@@ -312,6 +312,34 @@ Resources:
             Method: patch
             Path: /items/{item_id}
             RestApiId: !Ref API
+  DeleteItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.delete_item
+      Role: !GetAtt 'CreateOnlyRole.Arn'
+      Environment:
+        Variables:
+          RESTRICTED_ROLE: !GetAtt 'CreateOnlyRoleAssume.Arn'
+      CodeUri: ../python_exercise
+      DeploymentPreference:
+        Type: AllAtOnce
+        Role: !ImportValue CODEDEPLOY-ROLE-ARN
+        Hooks:
+          PreTraffic: !If
+            - isNotProd
+            - !Ref GetItemPreTrafficHook
+            - !Ref AWS::NoValue
+          PostTraffic: !If
+            - isNotProd
+            - !Ref GetItemPostTrafficHook
+            - !Ref AWS::NoValue
+      Events:
+        DeleteItem:
+          Type: Api
+          Properties:
+            Method: delete
+            Path: /items/{item_id}
+            RestApiId: !Ref API
 
   GetItemPreTrafficHook:
     Condition: isNotProd
