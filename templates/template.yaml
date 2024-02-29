@@ -227,7 +227,7 @@ Resources:
             Principal:
               AWS: !GetAtt 'CreateOnlyRole.Arn'
             Action: sts:AssumeRole
-            
+
   GetItem:
     Type: AWS::Serverless::Function
     Properties:

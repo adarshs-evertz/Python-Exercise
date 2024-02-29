@@ -82,7 +82,7 @@ class Service:
             self.database.update_item(
                 item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id, item_data=item
             )
-        except Exception :
+        except Exception:
             logger.exception("exception occured")
             raise
         return item
