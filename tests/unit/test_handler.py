@@ -106,3 +106,13 @@ class TestHandler:
         response = handler.delete_item(event, context)
         assert response["statusCode"] == HTTPStatus.NO_CONTENT
 
+    @mock.patch("handler.Db")
+    def test_del_item_not_found(self, mock_db, delete_not_existing_item_event):
+        event, context = delete_not_existing_item_event
+
+        mock_db.return_value = MockDb()
+        response = handler.delete_item(event, context)
+        assert response["statusCode"] == HTTPStatus.NOT_FOUND
+        body = json.loads(response["body"])
+        assert "errors" in body
+        assert body["errors"][0]["code"] == "ItemNotFound"

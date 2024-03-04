@@ -116,7 +116,7 @@ paths:
       tags:
         - python-exercise
       security:
-        - BearerToken: [ ]
+        - BearerToken: []
       x-amazon-apigateway-integration:
         type: aws_proxy
         httpMethod: POST

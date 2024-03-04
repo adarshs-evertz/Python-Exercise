@@ -202,7 +202,6 @@ def delete_item(event: ItemWithPathParametersModel, context: LambdaContext) -> d
         service.delete_item(item_id=item_id)
         response = {
             "statusCode": HTTPStatus.NO_CONTENT,
-            "body": "Item Deleted Succesfullly",
         }
     except ItemNotFound as error:
         error_context = {

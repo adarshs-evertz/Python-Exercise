@@ -91,7 +91,7 @@ class Service:
     def delete_item(
         self,
         item_id: str,
-    ) -> dict:
+    ):
         """
         Deleting item
 
@@ -102,9 +102,7 @@ class Service:
         logger.info(f"Deleting Item: {item_id}")
 
         try:
-            self.database.delete_item(
-                item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id
-            )
+            self.database.delete_item(item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id)
         except Exception:
             logger.exception("exception occured")
             raise

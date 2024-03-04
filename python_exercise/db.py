@@ -162,7 +162,7 @@ class Db:
             raise
 
     @staticmethod
-    @start_span("database_put_item")
+    @start_span("database_delete_item")
     def delete_item(item_type: ItemType, tenant_id: str, item_id: str):
         """
         Delete an item from database
@@ -179,6 +179,7 @@ class Db:
             error = client_error.response.get("Error", {})
             error_code = error.get("Code", "")
             logger.error(f"Error Code: [{error_code}]")
-        except Exception:
-            logger.exception("exception occured")
+
+            if error_code == "ConditionalCheckFailedException":
+                raise ItemNotFound(item_type.value, tenant_id, item_id) from client_error
             raise
