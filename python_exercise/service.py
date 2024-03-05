@@ -57,3 +57,32 @@ class Service:
             # tests errors here
             raise error
         return item
+
+    @start_span("service_update_item")
+    def update_item(
+        self,
+        item: dict,
+        item_id: str,
+    ) -> dict:
+        """
+        Updating item
+
+        :param item: the item data to be saved
+        :param item_id: The id of the user to fetch
+
+        :return: Dictionary containing item details
+        """
+        logger.info(f"Updating Item: {item}")
+        now = datetime.datetime.utcnow().isoformat()
+        item["modification_info"] = {
+            "last_modified_at": now,
+            "last_modified_by": self.user_id,
+        }
+        try:
+            self.database.update_item(
+                item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id, item_data=item
+            )
+        except Exception:
+            logger.exception("exception occured")
+            raise
+        return item
