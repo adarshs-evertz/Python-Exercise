@@ -130,3 +130,17 @@ def get_not_existing_item_event(jwts, api_gateway_event):
     event, context = api_gateway_event("999", "/get_item/999", "GET")
     event["headers"]["Authorization"] = jwts["IdToken"]
     yield event, context
+
+
+@pytest.fixture()
+def delete_correct_item_event(jwts, api_gateway_event):
+    event, context = api_gateway_event("1", "/delete_item/1", "DELETE")
+    event["headers"]["Authorization"] = jwts["IdToken"]
+    yield event, context
+
+
+@pytest.fixture()
+def delete_not_existing_item_event(jwts, api_gateway_event):
+    event, context = api_gateway_event("999", "/delete_item/999", "DELETE")
+    event["headers"]["Authorization"] = jwts["IdToken"]
+    yield event, context

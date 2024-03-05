@@ -40,6 +40,8 @@ paths:
       operationId: createItem
       summary: Create Item
       description: Creating an Item
+      requestBody:
+        $ref: '#/components/requestBodies/CreateItemRequest'
       responses:
         '200':
           $ref: '#/components/responses/GetItemResponse'
@@ -77,6 +79,31 @@ paths:
         passthroughBehavior: when_no_match
         uri:
           Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetItem.Arn}:live/invocations
+    delete:
+      operationId: deleteItem
+      summary: Delete Item
+      description: Deleting an item
+      requestBody:
+        $ref: '#/components/requestBodies/DeleteItemRequest'
+      parameters:
+        - $ref: '#/components/parameters/item_id'
+      responses:
+        '200':
+          $ref: '#/components/responses/GetItemResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequestErrorResponse'
+        '404':
+          $ref: '#/components/responses/404NotFoundErrorResponse'
+      tags:
+        - python-exercise
+      security:
+        - BearerToken: []
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        httpMethod: POST
+        passthroughBehavior: when_no_match
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteItem.Arn}:live/invocations
 components:
   parameters:
     item_id:
@@ -99,6 +126,14 @@ components:
           schema:
             type: object
             description: Item data
+    DeleteItemRequest:
+      description: Deleting an item
+      required: True
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            description: delete item data
   responses:
     GetItemResponse:
       description: Details of an Item

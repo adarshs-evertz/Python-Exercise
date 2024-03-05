@@ -40,7 +40,6 @@ def create_item(event: ItemModel, context: LambdaContext) -> dict:
     tenant_id = identity.tenant
     item_data = event.body
     item_data = event.body.dict()
-    request_id = event.requestContext.requestId
 
     # Database served as dependency injection here, so it will be easier to test this or mock it base on level 0
     service = Service(Db(), tenant_id, identity.sub)
@@ -109,6 +108,61 @@ def get_item(event: ItemWithPathParametersModel, context: LambdaContext) -> dict
         response = {
             "statusCode": HTTPStatus.BAD_REQUEST,
             "headers": Headers(content_type="application/vnd.api+json").dict(by_alias=True),
+            "body": ErrorsBody(errors=[error_context]).json(),
+        }
+    return response
+
+
+# pylint: disable=no-value-for-parameter
+@export_trace(export_service=ExportService.OTEL_COLLECTOR_LAYER)
+@join_trace(event_source=EventSource.API_GATEWAY_REQUEST)
+@event_parser(model=ItemWithPathParametersModel)
+def delete_item(event: ItemWithPathParametersModel, context: LambdaContext) -> dict:
+    """
+    Retrieve an item
+    :param event: event with data to process
+    :param context: lambda execution context
+    """
+    logger.info(f"Event: {event}")
+    logger.info(f"Context: {context}")
+    identity = get_identity_from_event(event=event.dict(), verify=False)
+    path_parameters = event.path_parameters
+    item_id = path_parameters.item_id
+    tenant_id = identity.tenant
+    request_id = event.requestContext.requestId
+
+    logger.info(f"Deleting Item: [{item_id}]")
+    logger.info(f"With Tenant Context: [{tenant_id}]")
+
+    # Database served as dependency injection here, so it will be easier to test this or mock it base on level 0
+    service = Service(Db(), tenant_id, identity.sub)
+    try:
+        service.delete_item(item_id=item_id)
+        response = {
+            "statusCode": HTTPStatus.NO_CONTENT,
+        }
+    except ItemNotFound as error:
+        error_context = {
+            "id": request_id,
+            "code": error.code,
+            "title": error.title,
+            "detail": error.msg,
+            "status": "404",
+        }
+        response = {
+            "statusCode": HTTPStatus.NOT_FOUND,
+            "body": ErrorsBody(errors=[error_context]).json(),
+        }
+    except ClientError as error:
+        error_context = {
+            "id": request_id,
+            "code": 400,
+            "title": "Unknown error",
+            "detail": error.args[0],
+            "status": "400",
+        }
+        response = {
+            "statusCode": HTTPStatus.BAD_REQUEST,
             "body": ErrorsBody(errors=[error_context]).json(),
         }
     return response

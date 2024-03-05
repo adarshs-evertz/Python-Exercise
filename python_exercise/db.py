@@ -127,3 +127,26 @@ class Db:
             raise ItemNotFound(item_type.value, tenant_id, item_id)
 
         return response.get("Item").get("data")
+
+    @staticmethod
+    @start_span("database_delete_item")
+    def delete_item(item_type: ItemType, tenant_id: str, item_id: str):
+        """
+        Delete an item from database
+        :param item_type: One of the types from ItemType
+        :param tenant_id: Id of the tenant trying to delete
+        :param item_id: item id of the item
+        """
+        logger.info(f"Deleting item [{item_id}] for tenant [{tenant_id}]")
+        keys: ItemKeys = ItemKeys.get_keys(item_type, tenant_id, item_id)
+        kwargs = {"Key": {PK_KEY: keys.primary}, "ConditionExpression": Attr(PK_KEY).exists()}
+        try:
+            restricted_table(TABLE_NAME, tenant_id).delete_item(**kwargs)
+        except ClientError as client_error:
+            error = client_error.response.get("Error", {})
+            error_code = error.get("Code", "")
+            logger.error(f"Error Code: [{error_code}]")
+
+            if error_code == "ConditionalCheckFailedException":
+                raise ItemNotFound(item_type.value, tenant_id, item_id) from client_error
+            raise
