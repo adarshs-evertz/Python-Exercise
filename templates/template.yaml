@@ -196,7 +196,7 @@ Resources:
               AWS: !GetAtt 'ReadOnlyRole.Arn'
             Action: sts:AssumeRole
 
-  CreateOnlyRole:
+  DbWriteOnlyRole:
     Type: AWS::IAM::Role
     Properties:
       ManagedPolicyArns:
@@ -213,7 +213,7 @@ Resources:
             Action:
               - sts:AssumeRole
 
-  CreateOnlyRoleAssume:
+  DbWriteOnlyRoleAssume:
     Type: AWS::IAM::Role
     Properties:
       ManagedPolicyArns:
@@ -225,7 +225,7 @@ Resources:
           - Sid: AllowRoleToAssumeRole
             Effect: Allow
             Principal:
-              AWS: !GetAtt 'CreateOnlyRole.Arn'
+              AWS: !GetAtt 'DbWriteOnlyRole.Arn'
             Action: sts:AssumeRole
 
   GetItem:
@@ -260,10 +260,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handler.create_item
-      Role: !GetAtt 'CreateOnlyRole.Arn'
+      Role: !GetAtt 'DbWriteOnlyRole.Arn'
       Environment:
         Variables:
-          RESTRICTED_ROLE: !GetAtt 'CreateOnlyRoleAssume.Arn'
+          RESTRICTED_ROLE: !GetAtt 'DbWriteOnlyRoleAssume.Arn'
       CodeUri: ../python_exercise
       DeploymentPreference:
         Type: AllAtOnce
@@ -288,10 +288,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handler.update_item
-      Role: !GetAtt 'CreateOnlyRole.Arn'
+      Role: !GetAtt 'DbWriteOnlyRole.Arn'
       Environment:
         Variables:
-          RESTRICTED_ROLE: !GetAtt 'CreateOnlyRoleAssume.Arn'
+          RESTRICTED_ROLE: !GetAtt 'DbWriteOnlyRoleAssume.Arn'
       CodeUri: ../python_exercise
       DeploymentPreference:
         Type: AllAtOnce
@@ -316,10 +316,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handler.delete_item
-      Role: !GetAtt 'CreateOnlyRole.Arn'
+      Role: !GetAtt 'DbWriteOnlyRole.Arn'
       Environment:
         Variables:
-          RESTRICTED_ROLE: !GetAtt 'CreateOnlyRoleAssume.Arn'
+          RESTRICTED_ROLE: !GetAtt 'DbWriteOnlyRoleAssume.Arn'
       CodeUri: ../python_exercise
       DeploymentPreference:
         Type: AllAtOnce

@@ -40,6 +40,8 @@ paths:
       operationId: createItem
       summary: Create Item
       description: Creating an Item
+      requestBody:
+        $ref: '#/components/requestBodies/CreateItemRequest'
       responses:
         '200':
           $ref: '#/components/responses/GetItemResponse'
@@ -81,6 +83,8 @@ paths:
       operationId: updateItem
       summary: Update Item
       description: Update details for an Item
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateItemRequest'
       parameters:
         - $ref: '#/components/parameters/item_id'
       responses:
@@ -104,6 +108,8 @@ paths:
       operationId: deleteItem
       summary: Delete Item
       description: Deleting an item
+      requestBody:
+        $ref: '#/components/requestBodies/DeleteItemRequest'
       parameters:
         - $ref: '#/components/parameters/item_id'
       responses:
@@ -136,6 +142,31 @@ components:
     ItemId:
       type: string
       format: uuid
+  requestBodies:
+    CreateItemRequest:
+      description: Creating an item
+      required: True
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            description: Item data
+    UpdateItemRequest:
+      description: Updating the existing item
+      required: True
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            description: update item data
+    DeleteItemRequest:
+      description: Deleting an item
+      required: True
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            description: delete item data
   responses:
     GetItemResponse:
       description: Details of an Item
