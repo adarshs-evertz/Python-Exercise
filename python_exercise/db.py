@@ -134,14 +134,13 @@ class Db:
         """
         Store updated item information in database
         :param item_type: One of the types from ItemType
-        :param tenant_id: item tenant
+        :param tenant_id: Id of the tenant trying to update item
         :param item_id: item id
         :param item_data: data to store with item
         """
         logger.info(f"Updating item [{item_id}] for tenant [{tenant_id}]")
         keys: ItemKeys = ItemKeys.get_keys(item_type, tenant_id, item_id)
         item = {DATA_ATTRIBUTE: item_data}
-        logger.info(f"Value of {item_data=}")
         logger.info(f"Value of {item[DATA_ATTRIBUTE]=}")
         updates = update_expression(update=item, partial_update=True)
         kwargs = {

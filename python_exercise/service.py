@@ -70,7 +70,7 @@ class Service:
         :param item: the item data to be saved
         :param item_id: The id of the user to fetch
 
-        :return: Dict
+        :return: Dictionary containing item details
         """
         logger.info(f"Updating Item: {item}")
         now = datetime.datetime.utcnow().isoformat()
