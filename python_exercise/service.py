@@ -57,3 +57,20 @@ class Service:
             # tests errors here
             raise error
         return item
+
+    @start_span("service_delete_item")
+    def delete_item(
+        self,
+        item_id: str,
+    ):
+        """
+        Deleting item
+        :param item_id: The id of the item to fetch
+        """
+        logger.info(f"Deleting Item: {item_id}")
+
+        try:
+            self.database.delete_item(item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id)
+        except Exception:
+            logger.exception("exception occured")
+            raise

@@ -14,3 +14,8 @@ class MockDb(Db):
             return {"success": True, "text": "some test text"}
         else:
             raise ItemNotFound(item_type.value, tenant_id, item_id)
+
+    @staticmethod
+    def delete_item(item_type: ItemType, tenant_id: str, item_id: str, fields=None):
+        if item_id != "1":
+            raise ItemNotFound(item_type.value, tenant_id, item_id)
